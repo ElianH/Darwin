@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, Dimensions, TouchableHighlight, Alert, Image, StyleSheet, ListView, Animated, Easing } from 'react-native';
+import { Text, View, Dimensions, TouchableHighlight, Alert, Image, StyleSheet, ListView, Animated, Easing, ActivityIndicator } from 'react-native';
 import { Actions } from 'react-native-router-flux';
 import MapView from 'react-native-maps';
 import LinearGradient from 'react-native-linear-gradient';
@@ -19,65 +19,83 @@ export default class GeneralMapView extends Component {
 	
 	constructor(props) {
 		super(props);
+				
 		this.onRegionChange = this.onRegionChange.bind(this);
 		this.showFooter = this.showFooter.bind(this);
 		
-		var latitudesArray = this.props.markers.slice().map((marker)=>{ return marker.coordinate.latitude });
-		var longitudesArray = this.props.markers.slice().map((marker)=>{ return marker.coordinate.longitude });
+		if (this.props.showNearMe){
+			this.state = ({isMapLoading : true});
+			navigator.geolocation.getCurrentPosition( 
+				(position) => { 
+					var initialPosition = JSON.stringify(position);
+					const delta = 0.015;
+					var latitudePos = position.coords.latitude-(delta/10);
+					var longitudePos = position.coords.longitude;
+					var latitudeDelta = delta;
+					var longitudeDelta = delta * ASPECT_RATIO;
+					this.setRegionState(latitudePos, longitudePos, latitudeDelta, longitudeDelta);
+				}, 
+				(error) => {
+					Alert.alert('Error while getting position', error);
+				},
+				{
+					enableHighAccuracy: false, 
+					timeout: 5000, 
+					maximumAge: 500000
+				}
+			);
+		}
+		else {
+			var latitudesArray = this.props.markers.slice().map((marker)=>{ return marker.coordinate.latitude });
+			var longitudesArray = this.props.markers.slice().map((marker)=>{ return marker.coordinate.longitude });
+			
+			var maxLatitude = Math.max.apply(Math, latitudesArray); 
+			var maxLongitude = Math.max.apply(Math, longitudesArray);
+			var minLatitude = Math.min.apply(Math, latitudesArray);
+			var minLongitude = Math.min.apply(Math, longitudesArray);
+			
+			var midLatitude = (maxLatitude-minLatitude)/2.0;
+			var midLongitude = (maxLongitude-minLongitude)/2.0;
+			
+			var latitudePos = minLatitude + midLatitude;
+			var longitudePos = minLongitude + midLongitude;
+			
+			const delta = 6;
+			var latitudeDelta = midLatitude * delta;
+			var longitudeDelta = midLongitude * (delta * ASPECT_RATIO);
+			
+			this.setRegionState(latitudePos, longitudePos, latitudeDelta, longitudeDelta);
+		}
+	}
+	
+	setRegionState(latitudePos, longitudePos, latitudeDelta, longitudeDelta){
 		
-		var maxLatitude = Math.max.apply(Math, latitudesArray); 
-		var maxLongitude = Math.max.apply(Math, longitudesArray);
-		var minLatitude = Math.min.apply(Math, latitudesArray);
-		var minLongitude = Math.min.apply(Math, longitudesArray);
-		
-		var midLatitude = (maxLatitude-minLatitude)/2.0;
-		var midLongitude = (maxLongitude-minLongitude)/2.0;
-		
-		var latitudePos = minLatitude + midLatitude;
-		var longitudePos = minLongitude + midLongitude;
-		
-		const delta = 6;
-		var latitudeDelta = midLatitude * delta;
-		var longitudeDelta = midLongitude * (delta * ASPECT_RATIO);
-		
+		/*
+		Alert.alert('pos', 
+			'latitudePos: ' + latitudePos + 
+			'  longitudePos: ' +  longitudePos + 
+			'  latitudeDelta: ' + latitudeDelta + 
+			'  longitudeDelta: ' + longitudeDelta);*/
 		this.state = {
 			region: {
-				latitude: latitudePos + (midLatitude/8.0),
+				latitude: latitudePos,
 				longitude: longitudePos,
 				latitudeDelta: latitudeDelta,
 				longitudeDelta: longitudeDelta,
 			},
 			coordinate: {
-				latitude: latitudePos + (midLatitude/8.0),
+				latitude: latitudePos,
 				longitude: longitudePos,
 			},
 			currentPage : 0,
 			prevPage : 0,
 			animatedCurrentPage : new Animated.Value(0),
+			isMapLoading : false,
 		};
-		
-//		setTimeout(() => {
-//		  Actions.statusModal({error: "Network failed, please try again in a few minutes...", hide: false}); 
-//		}, 5000);
-
-/*
-						{markers.map(marker => (
-							<MapView.Marker
-								key={marker.key}
-								coordinate={marker.coordinate}>
-								<View>
-									<Image style={styles.marker} source={markerImageSource}/>
-									<Text>{marker.key}</Text>
-								</View>
-							</MapView.Marker>
-						))}
-*/
+		Actions.refresh();
 	}
 
-	onRegionChange(region) {
-		if (this.refreshTaskId != null){
-			clearTimeout(this.refreshTaskId); 
-		}		
+	onRegionChange(region) {	
 		this.setState({ 
 			region : region, 
 			coordinate: {
@@ -90,34 +108,26 @@ export default class GeneralMapView extends Component {
 	
 	showFooter(markers, marker) {
 		if (this.selectedMarker == marker) return;
-		if (this.refreshTaskId != null){
-			clearTimeout(this.refreshTaskId); 
-		}
 		var page = markers.indexOf(marker);
-		//Alert.alert('page: ' + page);
-		
 		this.selectedMarker = marker;
-		//this.refreshTaskId = setTimeout(() => {
-		//	this.setState({ selectedMarker : marker }); },500);
-		
 		this.setState({ selectedMarker : marker, currentPage : page}); 
 		setTimeout(() => { this.viewpager.goToPage(page) },1);
 	}
 	
 	onChangeFooterPage(markers, pageNumber){
-		//Alert.alert('Markers: ' + this.markers.slice().length);
-		//Alert.alert('Page number: ' + pageNumber);
 		var marker = this.markers[pageNumber];
 		var page = markers.indexOf(marker);
 		this.selectedMarker = marker;
 		this.state.selectedMarker = marker;
 		this.state.animatedCurrentPage.setValue(pageNumber);
-		/*
-		if (this.state.currentPage != page){
-			setTimeout(() => { this.setState({ selectedMarker : marker, currentPage : page}); },500);
-		}
-		*/
 		this.setState({ selectedMarker : marker, currentPage : page}); 
+	}
+	
+	isMarkerNearMe(marker){
+		return marker.coordinate.latitude < this.state.region.latitude + this.state.region.latitudeDelta
+				&& marker.coordinate.latitude > this.state.region.latitude - this.state.region.latitudeDelta
+				&& marker.coordinate.longitude < this.state.region.longitude + this.state.region.longitudeDelta
+				&& marker.coordinate.longitude > this.state.region.longitude - this.state.region.longitudeDelta;
 	}
 
 	render() {
@@ -148,39 +158,30 @@ export default class GeneralMapView extends Component {
 		var filteredMarkerTypesDataSource = ds.cloneWithRows(this.distinctMarkerTypes);
 		
 		// Markers for the map (filter disabled types)
-		this.markers = this.props.markers.slice().filter((marker)=> { return this.uniqueMarkerTypes[marker.typeName].isEnabled });
-		this.markers2 = this.markers;
+		this.markers = this.props.markers.slice().filter((marker)=> { 
+			if (!this.props.showNearMe){
+				return this.uniqueMarkerTypes[marker.typeName].isEnabled; 
+			}
+			else if (!this.state.isMapLoading) {
+				return this.uniqueMarkerTypes[marker.typeName].isEnabled && this.isMarkerNearMe(marker);	
+			}
+		});
 		
 		// Markers for view pager
 		const vpds = new ViewPager.DataSource({pageHasChanged: (p1, p2) => p1 !== p2});
 		var markersViewPagerDataSource = vpds.cloneWithPages(this.markers);
-		
-		/*
-		var coordinate = { latitude: -54.8054, longitude: -68.3378 };
-		<View>
-			<Image style={styles.marker} source={markerImageSource}/>
-			<Text>{marker.key}</Text>
-		</View>
-		
-						<View style={styles.navBarStyle}>
-					<TouchableHighlight style={styles.navBarBackButton} onPress={() => { Actions.pop();	}}>
-						<Image style={styles.navBarBackButtonImage} tintColor='#EEEEEE' source={navBarBackButtonImageSource}/>
-					</TouchableHighlight>
-					<Text style={styles.navBarText}>{upperCaseDestinations}</Text>
-				</View>
-				
-				
-					onRegionChange={this.onRegionChange}
-					
-					onPageChanging={(pageNumber) => this.onChangeFooterPage(this.markers, pageNumber)}
-							onChangePage={(pageNumber) => this.onChangeFooterPage(this.markers, pageNumber)}
-		*/
-		
+
 		return (
-		
 			<View style={{flex:1}}>
-		
-				
+			
+				{
+					(this.state.isMapLoading) &&
+					<View style={styles.mapLoadingView}>
+						<ActivityIndicator style={styles.loading} size="large" color='#333' />	
+					</View>
+				}
+				{
+					(!this.state.isMapLoading) &&
 					<MapView.Animated
 						moveOnMarkerPress={false}
 						style={styles.map}
@@ -216,9 +217,9 @@ export default class GeneralMapView extends Component {
 							}
 							)}
 					</MapView.Animated>
-				
+				}
 				{
-					this.props.showFilters &&
+					(this.props.showFilters) &&
 					<View style={styles.filterBackground}>
 						<ListView 
 							horizontal={true}
@@ -244,9 +245,8 @@ export default class GeneralMapView extends Component {
 						</ListView>
 					</View>
 				}		
-				
 				{
-					this.selectedMarker != null &&
+					(!this.state.isMapLoading) && (this.selectedMarker != null) && (this.markers.length > 0) &&
 					<View style={styles.footerViewPagerStyle}>
 						<ViewPager 
 							ref={(viewpager) => {this.viewpager = viewpager}}
@@ -414,6 +414,17 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0
-	}
+	},
+	mapLoadingView:{
+		backgroundColor: '#F0EDE5',
+		...StyleSheet.absoluteFillObject,
+		alignItems:'center',
+		justifyContent:'center',
+	},
+	loading:{
+		alignSelf: 'stretch',
+		height: 40,
+		justifyContent: 'center',
+	},
 	
 });

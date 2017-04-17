@@ -20,6 +20,19 @@ module.exports = {
 		planYourTrip: 'Plan your trip',
 		weather: 'Weather',
 				
-		nearMe: 'Near me'
+		nearMe: 'Near me',
+		
+		offlineMode: 'Offline mode',
+		offlineModeAlertText: 'Unable to reach the network, starting app in offline mode...',
+		
+		settings: 'Settings',
+		changeLanguage: 'Change language',
+		aboutDarwin: 'About Darwin',
+		termsAndConditions: 'Terms and conditions',
+		privacyPolicy: 'Privacy policy',
+		followUsOnFacebook: 'Follow us on Facebook',
+		emailUs: 'Email us',
+		english: 'English',
+		spanish: 'Spanish',
 	}
 }

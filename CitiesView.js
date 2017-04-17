@@ -33,50 +33,70 @@ export default class CitiesView extends Component {
 	goToCityPage(localizedStrings, selectedCity){ 
 		Actions.cityPage({localizedStrings: localizedStrings, selectedCity: selectedCity}); 
 	}
-  
+	
+	goToInfoPage(localizedStrings, city){ 
+		Actions.infoPage({ localizedStrings: localizedStrings, selectedItem: city}); 
+	}
+	
+	onLanguageChanged(localizedStrings, citiesJson){
+		this.setState({
+			localizedStrings: localizedStrings, 
+			citiesJson: citiesJson
+		});
+	}
+	  
   render() {
-	
-	// navigation	
-	//const goToCityPage = (selectedCity) => { 
-	//	Actions.cityPage({localizedStrings: this.props.localizedStrings, selectedCity: selectedCity}); 
-	//};
-	
-	//const goToGeneralMapPage = () => { Actions.generalMapPage({
-	//		localizedStrings: this.props.localizedStrings, 
-	//		markers: this.props.citiesJson,
-	//		showFilters: false,
-	//		onMarkerClick: goToCityPage
-	//	}); 
-	//};
 
+	// localized strings
+    var localizedStrings = null;
+	if (this.state != null && this.state.localizedStrings != null){
+		localizedStrings = this.state.localizedStrings;
+	}
+	else {
+		localizedStrings = this.props.localizedStrings;
+	}
+	
+	// citiesJson
+    var citiesJson = null;
+	if (this.state != null && this.state.citiesJson != null){
+		citiesJson = this.state.citiesJson;
+	}
+	else {
+		citiesJson = this.props.citiesJson;
+	}
+	
 	// filtered cities
 	var filterText = this.text.toLowerCase();
     const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
-	var newFilter = this.props.citiesJson.slice().filter((item)=> { return (filterText === '' || item.name.toLowerCase().indexOf(filterText) !== -1) });
+	var newFilter = citiesJson.slice().filter((item)=> { return (filterText === '' || item.name.toLowerCase().indexOf(filterText) !== -1) });
 	var filteredDataSource = ds.cloneWithRows(newFilter);
 
 	// nav bar title
-	var upperCaseDestinations = this.props.localizedStrings.destinations.toUpperCase();
+	var upperCaseDestinations = localizedStrings.destinations.toUpperCase();
+	
+	const infoIconImageSource = require('./img/Icons/icon_info.png');
 	
     return (
 	
 		<View style={styles.citiesBackground}>
-			<StatusBar hidden={false} backgroundColor='#000' />
 			<NavBar style={{height:50}} 
 				title={upperCaseDestinations} 
-				localizedStrings={this.props.localizedStrings}
+				localizedStrings={localizedStrings}
 				enableSearch={true}
+				enableBackButton={false}
+				enableConfigButton={true}
 				onSearchChanged={(isSearching, text) => { 
 					this.isSearching = isSearching;  
 					this.text = text;
 				}}
-				onMapButtonClick={() => { this.goToGeneralMapPage(this.props.localizedStrings, this.props.citiesJson); }}/>
+				onLanguageChanged= { (localizedStrings, citiesJson) => { this.onLanguageChanged(localizedStrings, citiesJson); }}
+				onMapButtonClick={() => { this.goToGeneralMapPage(localizedStrings, citiesJson); }}/>
 			<ListView style={styles.citiesListView}
 				keyboardShouldPersistTaps={true}
 				dataSource={filteredDataSource}
 				renderRow={(city) => {
 					return (
-						<TouchableHighlight style={styles.cityButton} onPress={() => { this.goToCityPage(this.props.localizedStrings, city) }}>
+						<TouchableHighlight style={styles.cityButton} onPress={() => { this.goToCityPage(localizedStrings, city) }}>
 							<Image style={styles.cityButtonBackgroundImage} borderRadius={6} source={{uri: city.mainImageSrc}}>
 								<LinearGradient 
 									start={{x: 0.0, y: 0.0}} 
@@ -91,7 +111,9 @@ export default class CitiesView extends Component {
 											<Text style={styles.cityButtonText}>{city.name.toUpperCase()}</Text>
 										</View>
 										<Text style={styles.cityButtonShortDescriptionText}>{city.shortDescription}</Text>
-										<View style={styles.cityButtonIconsView}/>
+										<TouchableHighlight style={styles.cityButtonIconsView} onPress={() => { this.goToInfoPage(localizedStrings, city) }}>
+											<Image style={styles.cityButtonInfoIconImage} tintColor='#EEEEEE' source={infoIconImageSource}/>
+										</TouchableHighlight>
 									</View>
 								</LinearGradient>
 							</Image>
@@ -144,18 +166,26 @@ const styles = StyleSheet.create({
 		marginLeft: 10,
 		marginTop: -5,
 		alignSelf: 'flex-start',
-		fontFamily: 'sans-serif-light',
+		fontFamily: 'OpenSans-Regular',
 		color: '#888'
 	},
 	cityButtonText: {
 		fontSize: 40,
 		marginLeft: 10,
 		alignSelf: 'flex-start',
-		fontFamily: 'Brandon_bld',
+		fontFamily: 'Brandon_blk',
 		color: '#F4F4F4'
 	},
 	cityButtonIconsView: {
-		height:40
+		height:40,
+		flexDirection: 'row',
+		alignSelf: 'flex-end', 
+	},
+	cityButtonInfoIconImage: {
+		width: 25,
+		height: 25,
+		margin: 10,
+		alignSelf: 'flex-end',
 	},
 	linearGradient: {
         backgroundColor: "transparent",

@@ -20,6 +20,19 @@ module.exports = {
 		planYourTrip: 'Armá tu viaje',
 		weather: 'Clima',
 		
-		nearMe: 'Cerca mío'
+		nearMe: 'Cerca mío',
+		
+		offlineMode: 'Modo offline',
+		offlineModeAlertText: 'Sin conexión, accediendo en modo offline...',
+		
+		settings: 'Configuración',
+		changeLanguage: 'Cambiar idioma',
+		aboutDarwin: 'Acerca de Darwin',
+		termsAndConditions: 'Términos y condiciones',
+		privacyPolicy: 'Política de privacidad',
+		followUsOnFacebook: 'Síguenos en Facebook',
+		emailUs: 'Envíanos un email',
+		english: 'Inglés',
+		spanish: 'Español',
 	}
 }

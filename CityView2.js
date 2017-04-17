@@ -40,11 +40,12 @@ export default class CityView extends Component {
 			localizedStrings: this.props.localizedStrings, 
 			selectedItem: item}); 
 		};  
-		const goToGeneralMapPage = () => { Actions.generalMapPage({
+		const goToGeneralMapPage = (showNearMe) => { Actions.generalMapPage({
 				localizedStrings: this.props.localizedStrings, 
 				markers: allMarkers,
 				showFilters: true,
-				onMarkerClick: goToInfoPage
+				onMarkerClick: (localizedStrings, item)=>goToInfoPage(item),
+				showNearMe : showNearMe,
 			}); 
 		};
 	
@@ -58,12 +59,18 @@ export default class CityView extends Component {
 		var upperCaseCityName = this.props.selectedCity.name.toUpperCase();
 			
 		// city images (for view pager)
+		var citiImages = [];
+		if (this.props.selectedCity.otherImages != null){
+			citiImages = this.props.selectedCity.otherImages;
+		}
 		const vpds = new ViewPager.DataSource({pageHasChanged: (p1, p2) => p1 !== p2});
-		var cityImagesDataSource = vpds.cloneWithPages(this.props.selectedCity.otherImages);
+		var cityImagesDataSource = vpds.cloneWithPages(citiImages);
+		
+		const iconNearMeImageSource = require('./img/Icons/icon_near.png');
 		
 		return (
 
-			<View style={{flex:1,alignSelf:'stretch'}}>
+			<View style={{flex:1,alignSelf:'stretch',backgroundColor: '#000'}}>
 				<NavBar style={{height:50}} 
 					title={upperCaseCityName} 
 					localizedStrings={this.props.localizedStrings} 
@@ -72,14 +79,15 @@ export default class CityView extends Component {
 						this.isSearching = isSearching;  
 						this.text = text;
 					}}
-					onMapButtonClick={goToGeneralMapPage}
+					onInfoButtonClick={()=> goToInfoPage(this.props.selectedCity) }
+					onMapButtonClick={()=> goToGeneralMapPage(false)}
 				/>
 				<View style={styles.cityBackground}>
 					<ListView contentContainerStyle={styles.cityMenusListView}
 						dataSource={filteredDataSource}
 						renderHeader={() => 
 							<View style={styles.cityListViewHeader}>
-								<TouchableHighlight style={styles.aroundMeButton} onPress={() => { this.goToGeneralMapPage(this.props.localizedStrings, this.props.selectedCity) }}>
+								<TouchableHighlight style={styles.aroundMeButton} onPress={() => goToGeneralMapPage(true) }>
 									<Image style={styles.aroundMeButtonBackgroundImage} borderRadius={6} source={{uri: this.props.selectedCity.mainImageSrc}}>
 										<LinearGradient 
 											start={{x: 0.0, y: 0.0}} 
@@ -91,6 +99,7 @@ export default class CityView extends Component {
 											>
 											<View style={styles.aroundMeButtonTextView}>
 												<Text style={styles.aroundMeButtonText}>{this.props.localizedStrings.nearMe.toUpperCase()}</Text>
+												<Image style={styles.cityMenuIconImage} resizeMode='contain' source={iconNearMeImageSource}/>
 											</View>
 										</LinearGradient>
 									</Image>
@@ -180,7 +189,7 @@ const styles = StyleSheet.create({
 		fontSize: 15,
 		marginLeft: 10,
 		alignSelf: 'center',
-		fontFamily: 'Brandon_bld',
+		fontFamily: 'OpenSans-Bold',
 		color: '#F4F4F4'
 	},
 	cityMenuButton:{
@@ -207,7 +216,7 @@ const styles = StyleSheet.create({
 		fontSize: 15,
 		marginLeft: 10,
 		alignSelf: 'center',
-		fontFamily: 'Brandon_bld',
+		fontFamily: 'OpenSans-Bold',
 		color: '#F4F4F4'
 	},
 });

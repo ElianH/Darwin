@@ -45,7 +45,7 @@
 			"text": "This is a very important note!!!"
 		},
 		{
-			"itemType":"Line"
+			"itemType":"LINE"
 		},
 		{
 			"itemType":"TITLE",
@@ -67,7 +67,7 @@
 			"textColumnRight":"Closed"
 		},
 		{
-			"itemType":"Line"
+			"itemType":"LINE"
 		},
 		{
 			"itemType":"PHONE",
@@ -91,7 +91,7 @@
 			"delta": 0.5
 		},
 		{
-			"itemType":"Line"
+			"itemType":"LINE"
 		},
 		{
 			"itemType":"SPACE",

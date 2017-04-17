@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Dimensions, Image, ListView, PixelRatio, StyleSheet, Text, View, StatusBar, Alert, TouchableHighlight, Linking} from 'react-native';
+import { Dimensions, Image, ListView, PixelRatio, StyleSheet, Text, View, StatusBar, Alert, TouchableHighlight, Linking, Animated, Easing} from 'react-native';
 import ViewPager from 'react-native-viewpager';
 import { Actions } from 'react-native-router-flux';
 import ParallaxScrollView from './ParallaxScrollView'
@@ -10,35 +10,8 @@ export default class InfoView extends Component {
 	constructor(props) {
 		super(props);
 		this.renderRow = this.renderRow.bind(this);
-		
-		/*
-		var food = [
-			{name: "Lettuce", category: "Vegetable"}, 
-			{name: "Lettuce1", category: "Vegetable"}, 
-			{name: "Lettuce2", category: "Vegetable"}, 
-			{name: "Lettuce3", category: "Vegetable"}, 
-			{name: "Apple", category: "Fruit"},
-			{name: "Orange", category: "Fruit"},
-			{name: "Potato", category: "Vegetable"}
-		];
-
-		var foodCategoryMap = {}; // Create the blank map
-		food.forEach(function(foodItem) {
-			if (!foodCategoryMap[foodItem.category]) {
-				// Create an entry in the map for the category if it hasn't yet been created
-				foodCategoryMap[foodItem.category] = [];
-			}
-			foodCategoryMap[foodItem.category].push(foodItem);
-		});
-
-		const sectionIds = ['a'];
-		const rowIds = ['1'];
-		this.state =  {
-			dataSource: new ListView.DataSource({
-				rowHasChanged: (r1, r2) => r1 !== r2,
-				sectionHeaderHasChanged: (s1, s2) => s1 !== s2
-				}).cloneWithRowsAndSections (foodCategoryMap)
-		};*/
+		this.animatedValue = new Animated.Value(0);
+		this.state = { sharePanelVisible: false };
 	}
 	
 	handleClick = (url) => { 
@@ -53,7 +26,7 @@ export default class InfoView extends Component {
   
 	renderRow(row) {
 		if ((row != null)&&(row.itemType != null)){
-			switch (row.itemType) {
+			switch (row.itemType.toUpperCase()) {
 				case 'TITLE':
 					return (
 						<View style={styles.rowView}>
@@ -67,20 +40,20 @@ export default class InfoView extends Component {
 				case 'TEXT':
 					return (
 						<View style={styles.rowView}>
-							<Text style={{flex:1, fontSize:14}}>{row.text}</Text>
+							<Text style={{flex:1, fontSize:16, fontFamily:'OpenSans-Regular'}}>{row.text}</Text>
 						</View>
 					);
 				case 'BOLD_TEXT':
 					return (
 						<View style={styles.rowView}>
-							<Text style={{flex:1, fontSize:14, fontWeight:'bold'}}>{row.text}</Text>
+							<Text style={{flex:1, fontSize:16, fontFamily:'OpenSans-Bold'}}>{row.text}</Text>
 						</View>
 					);
 				case 'DOUBLE_COLUMN_TEXT':
 					return (
 						<View style={[styles.rowView, {justifyContent:'space-between', flexDirection:'row'}]}>
-							<Text>{row.textColumnLeft}</Text>
-							<Text>{row.textColumnRight}</Text>
+							<Text style={{fontSize:16, fontFamily:'OpenSans-Regular'}}>{row.textColumnLeft}</Text>
+							<Text style={{fontSize:16, fontFamily:'OpenSans-Regular'}}>{row.textColumnRight}</Text>
 						</View>
 					);
 				case 'PHONE':
@@ -109,11 +82,9 @@ export default class InfoView extends Component {
 					);
 				case 'MAP':
 					return (
-						<TouchableHighlight style={styles.rowViewTouchable} onPress={() => { this.handleClick(row.location); }}>
-							<View>
-								<Text style={styles.rowViewTouchableText}>{row.text}</Text>
-							</View>
-						</TouchableHighlight>
+						<View>
+							<Text style={styles.rowViewTouchableText}>{row.latitude}</Text>
+						</View>
 					);
 				case 'SHARE':
 					return (
@@ -148,11 +119,46 @@ export default class InfoView extends Component {
 		}
 		return ( <View/> );
 	}
+	
+	toggleSharePanel(){
+		if (!this.sharePanelVisible){
+			Animated.spring(
+				this.animatedValue,
+				{
+				  toValue: 1,
+				  friction: 5
+				}
+			).start();
+			this.sharePanelVisible = true;
+		}
+		else {
+			this.hideSharePanel();
+		}
+	}
+	
+	hideSharePanel(){
+		if (this.sharePanelVisible){
+			Animated.timing(
+					this.animatedValue,
+					{
+					  toValue: 0,
+						duration: 250,
+						easing: Easing.inOut(Easing.ease),
+						delay: 0,
+					}
+				).start();
+				this.sharePanelVisible = false;
+		}
+	}
 
   render() {
 	  
-    const { onScroll = () => {} } = this.props;
-
+    const { onScroll = () => { this.hideSharePanel(); } } = this.props;
+	const twitterIconImageSource = require('./img/Icons/twitter.png');
+	const facebookIconImageShou = require('./img/Icons/facebook.png');
+	const whatsappIconImageSource = require('./img/Icons/whatsapp.png');
+	const instagramIconImageSource = require('./img/Icons/instagram.png');
+	
 	// navigation
 	const goToInfoPage = (item) => { Actions.infoPage({
 			localizedStrings: this.props.localizedStrings, 
@@ -162,7 +168,7 @@ export default class InfoView extends Component {
 			localizedStrings: this.props.localizedStrings, 
 			markers: [ this.props.selectedItem ],
 			showFilters: false,
-			onMarkerClick: goToInfoPage
+			onMarkerClick: (localizedStrings,item)=>goToInfoPage(item)
 		}); 
 	};
 		
@@ -182,76 +188,13 @@ export default class InfoView extends Component {
 	}
 	var infoItemsDataSource = ds.cloneWithRows(infoItems);
 		
-	
-	/*
-								<View style={{position: 'absolute',
-										  top: 0,
-										  width: window.width,
-										  backgroundColor: 'rgba(0,0,0,.4)',
-										  height: PARALLAX_HEADER_HEIGHT}}/>
-										  
-										  renderFixedHeader={() => (
-					  <View key="fixed-header" style={styles.fixedSection}>
-						<Text style={styles.fixedSectionText}
-							  onPress={() => this.refs.ListView.scrollTo({ x: 0, y: 0 })}>
-						  Scroll to top
-						</Text>
-					  </View>
-					)}
-										  
-										  renderBackground
-										  
-										  					renderForeground={() => (
-					  <View key="parallax-header" style={ styles.parallaxHeader }>
-						<Image style={ styles.avatar } source={{
-						  uri: 'https://pbs.twimg.com/profile_images/2694242404/5b0619220a92d391534b0cd89bf5adc1_400x400.jpeg',
-						  width: AVATAR_SIZE,
-						  height: AVATAR_SIZE
-						}}/>
-						<Text style={ styles.sectionSpeakerText }>
-						  Talks by Rich Hickey
-						</Text>
-						<Text style={ styles.sectionTitleText }>
-						  CTO of Cognitec, Creator of Clojure
-						</Text>
-					  </View>
-					)}
-					
-					
-					renderFixedHeader={() => (
-					  <View key="fixed-header" style={styles.fixedSection}>
-						<NavBar style={{height:50}} 
-							title=''							
-							localizedStrings={this.props.localizedStrings} 
-							enableSearch={false}
-							onMapButtonClick={goToGeneralMapPage}
-						/>
-					  </View>
-					)}/>
-					
-								
-				<TouchableHighlight style={styles.navBarBackButton} onPress={() => {
-					this.text = '';
-					this.isSearching = false;
-					Actions.pop();
-					}}>
-					<Image style={styles.navBarBackButtonImage} tintColor='#EEEEEE' source={navBarBackButtonImageSource}/>
-				</TouchableHighlight>
-				<View style={{flex:1}}/>
-				<TouchableHighlight style={styles.navBarMapButton} onPress={() => { this.props.onMapButtonClick(); }}>
-					<Image style={styles.navBarMapButtonImage} tintColor='#EEEEEE' source={navBarMapButtonImageSource}/>
-				</TouchableHighlight>
-
-				renderSectionHeader={ (sectionData, sectionID) =>	
-					<View style={{width:400, height:100, backgroundColor:'#0F0'}}>
-						<Text>test section header</Text>
-					</View>
-				}
-				*/
-	
-	//const navBarBackButtonImageSource = require('./img/Icons/arrow_back/android/drawable-xhdpi/ic_arrow_back_black_24dp.png');
-	//const navBarMapButtonImageSource = require('./img/Icons/map/android/drawable-xhdpi/ic_map_black_48dp.png');
-	
+	// share panel animated value
+	shareButtonImage = require('./img/Icons/share.png');
+	const activityDetailsViewHeight = this.animatedValue.interpolate({
+		inputRange: [0, 1],
+		outputRange: [0, 100]
+	});
+		
     return (
 		<View style={{flex:1}}>
 			<StatusBar hidden={false} backgroundColor='#000' />
@@ -261,13 +204,17 @@ export default class InfoView extends Component {
 				style={styles.container}
 				dataSource={ infoItemsDataSource }
 				renderRow={this.renderRow}		 
-				initialListSize={100} 
+				initialListSize={300} 
 				removeClippedSubviews={false}
 				renderHeader={() => 
 					<View style={{ backgroundColor:'#000', flexDirection:'column', justifyContent: 'space-between', padding:15}}>			
-						<Text style={{ color:'#FFF', fontSize:27, fontFamily:'Brandon_bld'}}>{this.props.selectedItem.name.toUpperCase()}</Text>
-						<Text style={{ color:'#FFF', fontSize:16, fontFamily:'Brandon_bld'}}>{"Testing the sub header, max six words".toUpperCase()}</Text>
-						<Text style={{ color:'#AAA', fontSize:16, fontFamily:'Brandon_bld'}}>Some more info here, six to ten words here</Text>
+						<Text style={{ color:'#F4F4F4', fontSize:27, fontFamily:'Brandon_blk'}}>{this.props.selectedItem.name.toUpperCase()}</Text>
+						<View style={{flexDirection:'row', justifyContent: 'space-between'}}>
+							<Text style={{ color:'#888', fontSize:16, fontFamily:'OpenSans-Regular'}}>{this.props.selectedItem.shortDescription}</Text>
+							<TouchableHighlight style={styles.openSharePanelButton} onPress={() => { this.toggleSharePanel(); }}>
+								<Image style={styles.openSharePanelButtonImage} resizeMode='contain' tintColor='#F4F4F4' source={shareButtonImage} />
+							</TouchableHighlight>
+						</View>
 					</View>
 				}
 
@@ -311,6 +258,26 @@ export default class InfoView extends Component {
 					enableSearch={false}
 					onMapButtonClick={goToGeneralMapPage}/>
 			</View>
+			{
+				<Animated.View style={styles.sharePanelView}>
+					<Animated.View style={{height: activityDetailsViewHeight, backgroundColor:'#000' }}>
+						<View style={styles.sharePanelInnerView}>
+							<TouchableHighlight style={styles.shareButton} onPress={() => { Alert.alert('Twitter'); }}>
+								<Image style={styles.shareButtonImage} resizeMode='contain' borderRadius={35} source={twitterIconImageSource} />
+							</TouchableHighlight>
+							<TouchableHighlight style={styles.shareButton} onPress={() => { Alert.alert('Facebook'); }}>
+								<Image style={styles.shareButtonImage} resizeMode='contain' borderRadius={35} source={facebookIconImageShou} />
+							</TouchableHighlight>
+							<TouchableHighlight style={styles.shareButton} onPress={() => { Alert.alert('WhatsApp'); }}>
+								<Image style={styles.shareButtonImage} resizeMode='contain' borderRadius={35} source={whatsappIconImageSource} />
+							</TouchableHighlight>
+							<TouchableHighlight style={styles.shareButton} onPress={() => { Alert.alert('Instagram'); }}>
+								<Image style={styles.shareButtonImage} resizeMode='contain' borderRadius={35} source={instagramIconImageSource} />
+							</TouchableHighlight>
+						</View>
+					</Animated.View>
+				</Animated.View>
+			}
 		</View>
     );
   }
@@ -412,6 +379,7 @@ const styles = StyleSheet.create({
 		fontSize: 20
 	},
 	rowView: {
+		marginTop: 10,
 		paddingLeft: 15,
 		paddingRight: 15,
 	},
@@ -424,8 +392,40 @@ const styles = StyleSheet.create({
 		backgroundColor: '#DDD',
 	},
 	rowViewTouchableText: {
-		fontSize: 23,
-		fontFamily: 'Brandon_bld',
-		color: '#222'
+		fontSize: 18,
+		marginRight: 10,
+		fontFamily: 'OpenSans-Regular',
+		color: '#888'
+	},
+	openSharePanelButton:{
+		margin:2,
+		alignSelf:'flex-end',
+	},
+	openSharePanelButtonImage:{
+		width: 30,
+		height: 30,
+	},
+	shareButton:{
+		width: 70,
+		height: 70,
+		borderRadius: 35,
+	},
+	shareButtonImage:{
+		width: 70,
+		height: 70,
+	},
+	sharePanelView:{
+		...StyleSheet.absoluteFillObject,
+		flex: 1,
+		flexDirection: 'column',
+		justifyContent: 'flex-end',
+		position: 'absolute',
+		top:0
+	},
+	sharePanelInnerView:{
+		flexDirection: 'row',
+		margin: 15,
+		justifyContent:'space-between',
+		alignSelf: 'stretch',
 	}
 });

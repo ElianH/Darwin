@@ -15,13 +15,20 @@ export default class NavBarView extends Component {
 	
 	// navigation	
 	const goToGeneralMapPage = () => { Actions.generalMapPage({localizedStrings: this.props.localizedStrings, citiesJson: this.props.citiesJson}); };  
+	const goToConfigPage = () => { Actions.configPage({
+		localizedStrings: this.props.localizedStrings,
+		onLanguageChanged: this.props.onLanguageChanged
+	}); };  
 
 	// nav bar
+	const configkButtonImageSource = require('./img/Icons/icon_config.png');
 	const backButtonImageSource = require('./img/Icons/arrow_back/android/drawable-xhdpi/ic_arrow_back_black_24dp.png');
 	const searchButtonImageSource = require('./img/Icons/search/android/drawable-xhdpi/ic_search_black_48dp.png');
 	const mapButtonImageSource = require('./img/Icons/map/android/drawable-xhdpi/ic_map_black_48dp.png');
 	const listButtonImageSource = require('./img/Icons/list.png');
 	const navBarCloseSearchButtonImageSource = require('./img/Icons/varios.png');
+	const filterButtonImageSource = require('./img/Icons/filter.png');
+	const infoButtonImageSource = require('./img/Icons/icon_info.png');
 	var navTitle = this.props.title;
 	var backgroundColor = this.props.backgroundColor;
 
@@ -31,14 +38,36 @@ export default class NavBarView extends Component {
 			{
 				(!this.isSearching) &&
 				<View style={[styles.navBarStyle,{backgroundColor:backgroundColor}]}>
-					<TouchableHighlight style={styles.navBarBackButton} onPress={() => {
-						this.text = '';
-						this.isSearching = false;
-						Actions.pop();
+					
+					{
+						(this.props.enableConfigButton != null && this.props.enableConfigButton != 'undefined' && this.props.enableConfigButton) &&
+						<TouchableHighlight style={styles.navBarConfigButton} onPress={() => { goToConfigPage() } }>
+							<Image style={styles.navBarConfigButtonImage} tintColor='#EEEEEE' source={configkButtonImageSource}/>
+						</TouchableHighlight>
+					}
+					{
+						(this.props.enableBackButton == null || this.props.enableBackButton == 'undefined' || this.props.enableBackButton) &&
+						<TouchableHighlight style={styles.navBarBackButton} onPress={() => {
+								this.text = '';
+								this.isSearching = false;
+								Actions.pop();
 						}}>
-						<Image style={styles.navBarBackButtonImage} tintColor='#EEEEEE' source={backButtonImageSource}/>
-					</TouchableHighlight>
+							<Image style={styles.navBarBackButtonImage} tintColor='#EEEEEE' source={backButtonImageSource}/>
+						</TouchableHighlight>
+					}
 					<Text style={styles.navBarText}>{navTitle}</Text>
+					{
+						(this.props.onFilterButtonClick) &&
+						<TouchableHighlight style={styles.navBarFilterButton} onPress={() => { this.props.onFilterButtonClick(); }}>
+							<Image style={styles.navBarFilterButtonImage} tintColor='#EEEEEE' source={filterButtonImageSource}/>
+						</TouchableHighlight>
+					}
+					{
+						(this.props.onInfoButtonClick) &&
+						<TouchableHighlight style={styles.navBarInfoButton} onPress={() => { this.props.onInfoButtonClick(); }}>
+							<Image style={styles.navBarInfoButtonImage} tintColor='#EEEEEE' source={infoButtonImageSource}/>
+						</TouchableHighlight>
+					}
 					{
 						(this.props.enableSearch) &&
 						<TouchableHighlight style={styles.navBarSearchButton} onPress={() => {
@@ -60,6 +89,11 @@ export default class NavBarView extends Component {
 						<TouchableHighlight style={styles.navBarMapButton} onPress={() => { this.props.onListButtonClick(this.props.localizedStrings, this.props.listItems); }}>
 							<Image style={styles.navBarMapButtonImage} tintColor='#EEEEEE' source={listButtonImageSource}/>
 						</TouchableHighlight>
+					}
+					{
+						(!this.props.onMapButtonClick && !this.props.onListButtonClick && !this.props.enableSearch) &&
+						<View style={styles.navBarBackButton}>
+						</View>
 					}
 				</View>
 			}
@@ -128,7 +162,14 @@ const styles = StyleSheet.create({
 		flex:1,
 	},
 	navBarBackButton: {
-		width:50,
+		width:45,
+		height:50,
+		flexDirection: 'column',
+		justifyContent: 'center',
+        alignItems: 'center',
+	},
+	navBarConfigButton: {
+		width:45,
 		height:50,
 		flexDirection: 'column',
 		justifyContent: 'center',
@@ -137,6 +178,11 @@ const styles = StyleSheet.create({
 	navBarBackButtonImage: {
 		width:25,
 		height:25,
+		alignSelf:'center',
+	},	
+	navBarConfigButtonImage: {
+		width:23,
+		height:23,
 		alignSelf:'center',
 	},	
 	navBarText: {
@@ -149,18 +195,18 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 	},	
 	navBarSearchButton: {
-		width:50,
+		width:45,
 		height:50,
 		flexDirection: 'column',
 		justifyContent: 'center',
         alignItems: 'center',
 	},
 	navBarSearchButtonImage: {
-		width:25,
-		height:25,
+		width:27,
+		height:27,
 	},		
 	navBarMapButton: {
-		width:50,
+		width:45,
 		height:50,
 		flexDirection: 'column',
 		justifyContent: 'center',
@@ -170,6 +216,28 @@ const styles = StyleSheet.create({
 		width:25,
 		height:25,
 	},
+	navBarFilterButton: {
+		width:45,
+		height:50,
+		flexDirection: 'column',
+		justifyContent: 'center',
+        alignItems: 'center',
+	},
+	navBarFilterButtonImage: {
+		width:25,
+		height:25,
+	},
+	navBarInfoButton: {
+		width:45,
+		height:50,
+		flexDirection: 'column',
+		justifyContent: 'center',
+        alignItems: 'center',
+	},
+	navBarInfoButtonImage: {
+		width:22,
+		height:22,
+	},
 	navBarSearchTextInput: {
 		height: 50, 
 		flex:1, 
@@ -177,7 +245,7 @@ const styles = StyleSheet.create({
 		color:'#EEE'
 	},
 	navBarCloseSearchButton: {
-		width:50,
+		width:45,
 		height:50,
 		flexDirection: 'column',
 		justifyContent: 'center',

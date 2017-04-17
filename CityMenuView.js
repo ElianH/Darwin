@@ -58,7 +58,6 @@ export default class CityMenuView extends Component {
 		return formattedPrice;
 	}
 	
-			// filter style, these can be moved outside the render method
 	sortingStyle(thisButton){
 		var color = '#EEE0';
 		if (this.sortBy == thisButton){
@@ -96,15 +95,15 @@ export default class CityMenuView extends Component {
 		const goToGeneralMapPage = () => { Actions.generalMapPage({
 				localizedStrings: this.props.localizedStrings, 
 				markers: this.props.selectedCityMenu.items,
-				showFilters: false,
-				onMarkerClick: goToInfoPage
+				showFilters: true,
+				selectedFilters: this.props.selectedCityMenu.itemType,
+				onMarkerClick: (localizedStrings, item)=>goToInfoPage(item)
 			}); 
 		};
 		
 		// get filter buttons based on the current items. Populate list and map for future use
 		const checkmarkImageSource = require('./img/Icons/checkmark.png');
-		const filterImageSource = require('./img/Icons/filter.png');
-		
+
 		const ds2 = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
 		if (this.distinctItemTypes.length == 0)
 		{
@@ -169,27 +168,6 @@ export default class CityMenuView extends Component {
 		
 		// nav bar title
 		var upperCaseCityMenuName = this.props.selectedCityMenu.cityMenuName.toUpperCase();
-
-
-		/*
-		<Text style={styles.itemButtonText}>{(this.openDrawer && this.props.localizedStrings.close) 
-															|| (!this.openDrawer && this.props.localizedStrings.filter)}</Text>
-															
-															
-																							<TouchableHighlight style={styles.itemButton} underlayColor="#E83D0133" onPress={() => { goToInfoPage(item) }}>
-									<Image style={styles.itemButtonImage} source={{ uri: item.mainImageSrc }}>																
-										<View style={styles.itemButtonView}>
-											<Text style={styles.itemButtonText}>{item.name}</Text>
-											<View style={styles.itemButtonSecondLineView}>
-												<Text style={styles.itemButtonTypeText}>{item.itemType.toUpperCase()}</Text>
-												<Text style={styles.itemButtonTypeText}>{this.formatPrice(item.price)}</Text>
-												<Text style={styles.itemButtonDistanceText}>{calculateItemDistance(this.state.lastPosition, item)}</Text>
-											</View>
-										</View>
-									</Image>
-								</TouchableHighlight>
-								
-		*/
 		
 		return (
 			<View style={{flex:1,alignSelf:'stretch'}}>
@@ -201,19 +179,10 @@ export default class CityMenuView extends Component {
 						this.isSearching = isSearching;  
 						this.text = text;
 					}}
+					onFilterButtonClick={toggleDrawer}
 					onMapButtonClick={goToGeneralMapPage}
 				/>
-				<View style={{height:35, backgroundColor:'#000', justifyContent:'flex-end', alignItems:'center', flexDirection:'row'}}>
-					{
-						hasFilters && 
-						<TouchableHighlight style={styles.removeFiltersButton} onPress={removeFilters}>
-							<Text style={styles.removeFiltersButtonText}>Remove filters</Text>
-						</TouchableHighlight>
-					}
-					<TouchableHighlight style={{backgroundColor:'#FFF0'}} onPress={() => { toggleDrawer() }}>
-						<Image style={styles.filterImage} resizeMode='contain' tintColor='#EEEEEE' source={filterImageSource}/>	
-					</TouchableHighlight>
-				</View>
+
 				<Drawer
 					type="overlay"
 					openDrawerOffset={80}
@@ -348,15 +317,14 @@ const styles = StyleSheet.create({
 	itemButtonView: {
 		alignSelf: 'stretch',
 		justifyContent: 'flex-end',
-		alignItems: 'center',
+		alignItems: 'flex-start',
 		flexDirection: 'column',
-		marginBottom: 35,
 	},
 	itemButtonText: {
 		fontSize: 20,
 		margin:5,
-		color:'#EEEEEE',
-		fontFamily: 'Brandon_bld',
+		color:'#F4F4F4',
+		fontFamily: 'Brandon_blk',
 	},
 	itemButtonSecondLineView: {
 		flex: 1,
@@ -365,16 +333,16 @@ const styles = StyleSheet.create({
 		
 	},
 	itemButtonTypeText: {
-		fontSize: 12,
+		fontSize: 14,
 		margin:5,
-		color:'#EEEEEE',
-		fontFamily: 'Brandon_bld',
+		color:'#F4F4F4',
+		fontFamily: 'OpenSans-Regular',
 	},
 	itemButtonDistanceText: {
 		fontSize: 14,
 		margin:5,
-		color:'#EEEEEE',
-		fontFamily: 'Brandon_bld',
+		color:'#F4F4F4',
+		fontFamily: 'OpenSans-Regular',
 	},
 	removeFiltersButton: {
 		flexDirection:'row',

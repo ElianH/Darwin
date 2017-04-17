@@ -45,7 +45,7 @@ export default class CityMenuView extends Component {
 				localizedStrings: this.props.localizedStrings, 
 				markers: this.props.items,
 				showFilters: true,
-				onMarkerClick: goToInfoPage
+				onMarkerClick: (localizedStrings, item)=>goToInfoPage(item)
 			}); 
 		};
 	  
