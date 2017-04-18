@@ -17,6 +17,7 @@ export default class CityMenuView extends Component {
 	sortBy = '';
 	distinctItemTypes = [];
 	itemTypesMap = {};
+	lastMenuName = "none";
 	
 	state = { 
 		lastPosition: '-'
@@ -87,6 +88,27 @@ export default class CityMenuView extends Component {
   
 	render() {
 	  
+        // needed to fix a bug when switching screens fast
+		if (this.lastMenuName != this.props.selectedCityMenu.cityMenuName){
+			this.text = '';
+			this.isSearching = false;
+			this.openDrawer = false;
+			this.sortBy = '';
+			this.distinctItemTypes = [];
+			this.itemTypesMap = {};
+			this.lastMenuName = this.props.selectedCityMenu.cityMenuName;
+		}
+	  
+		// flat map all items for all menues (this will be passed to th map later)
+		var arrays = this.props.selectedCity.cityMenus.slice().map((cityMenu)=> { 
+			return cityMenu.items.slice().map((item)=>{
+				item.typeName = cityMenu.cityMenuName;
+				item.typeImageSrc = cityMenu.imageSrc;
+				return item;
+			}) 
+		});
+		var allMarkers = [].concat.apply([], arrays);
+	
 		// navigation
 		const goToInfoPage = (item) => { Actions.infoPage({
 			localizedStrings: this.props.localizedStrings, 
@@ -94,9 +116,9 @@ export default class CityMenuView extends Component {
 		};  
 		const goToGeneralMapPage = () => { Actions.generalMapPage({
 				localizedStrings: this.props.localizedStrings, 
-				markers: this.props.selectedCityMenu.items,
+				markers: allMarkers,
 				showFilters: true,
-				selectedFilters: this.props.selectedCityMenu.itemType,
+				selectedType: this.props.selectedCityMenu.cityMenuName,
 				onMarkerClick: (localizedStrings, item)=>goToInfoPage(item)
 			}); 
 		};
@@ -136,7 +158,14 @@ export default class CityMenuView extends Component {
 			return (filterText === '' || item.name.toLowerCase().indexOf(filterText) !== -1) 
 		});
 		var newFilter = newFilter.slice().filter((item)=> { 
-			return this.itemTypesMap[item.itemType].isSelected;
+			var itemType = this.itemTypesMap[item.itemType];
+			if (itemType != null){
+				return itemType.isSelected;
+			}
+			else {
+				// This should never happen
+				return false;
+			};
 		});
 		if (this.sortBy != ''){
 			newFilter = newFilter.slice().sort((item1, item2)=> { 

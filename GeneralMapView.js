@@ -46,8 +46,15 @@ export default class GeneralMapView extends Component {
 			);
 		}
 		else {
-			var latitudesArray = this.props.markers.slice().map((marker)=>{ return marker.coordinate.latitude });
-			var longitudesArray = this.props.markers.slice().map((marker)=>{ return marker.coordinate.longitude });
+			// Zoom to show all visible Markers
+
+			var markers = this.props.markers;
+			if (this.props.selectedType != null){
+				markers = markers.slice().filter(marker => marker.typeName == this.props.selectedType);
+			}
+			
+			var latitudesArray = markers.slice().map((marker)=>{ return marker.coordinate.latitude });
+			var longitudesArray = markers.slice().map((marker)=>{ return marker.coordinate.longitude });
 			
 			var maxLatitude = Math.max.apply(Math, latitudesArray); 
 			var maxLongitude = Math.max.apply(Math, longitudesArray);
@@ -146,7 +153,8 @@ export default class GeneralMapView extends Component {
 		// Get the list of distinct marker types for the filters		
 		if (this.distinctMarkerTypes.length == 0){
 			this.props.markers.slice().map((marker)=> {  
-				var type = { typeName:marker.typeName, imageSrc:marker.typeImageSrc, isEnabled:true };
+				var isEnabled = (this.props.selectedType == null) || (marker.typeName == this.props.selectedType);
+				var type = { typeName:marker.typeName, imageSrc:marker.typeImageSrc, isEnabled: isEnabled };
 				if( typeof(this.uniqueMarkerTypes[type.typeName]) == "undefined"){
 					this.distinctMarkerTypes.push(type);
 				}
